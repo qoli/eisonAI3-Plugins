@@ -1,0 +1,13 @@
+{
+  "name": "@eisonai3/plugin-xiaohongshu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs && npm run validate",
+    "validate": "node scripts/validate.mjs"
+  },
+  "devDependencies": {
+    "linkedom": "^0.18.12"
+  }
+}
