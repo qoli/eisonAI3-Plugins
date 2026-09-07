@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/qoli/eisonAI3-PluginProtocol/schema/plugin-manifest.schema.json",
+  "$id": "https://github.com/qoli/eisonAI3-Plugins/protocol/schema/plugin-manifest.schema.json",
   "title": "eisonAI3 plugin manifest draft v0",
   "type": "object",
   "additionalProperties": false,

@@ -36,9 +36,9 @@ npm install
 npm run check
 ```
 
-`npm run validate` invokes the validator from the adjacent
-`eisonAI3-PluginProtocol` repository. DOM fixture tests use `linkedom`; they do
-not make network requests or prove compatibility with the current live X DOM.
+`npm run validate` invokes the centralized validator under `protocol/`. DOM
+fixture tests use `linkedom`; they do not make network requests or prove
+compatibility with the current live X DOM.
 
 ## Host collection loop
 

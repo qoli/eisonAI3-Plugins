@@ -1,0 +1,25 @@
+name: Validate plugin store
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            plugins/x/package-lock.json
+            plugins/xiaohongshu/package-lock.json
+      - run: npm ci --prefix plugins/x
+      - run: npm ci --prefix plugins/xiaohongshu
+      - run: npm run check

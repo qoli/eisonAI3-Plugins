@@ -4,14 +4,16 @@
     {
       "id": "xiaohongshu",
       "displayName": "小紅書",
-      "scriptURL": "https://raw.githubusercontent.com/qoli/eisonAI3-Plugin-Xiaohongshu/38086808f15d3d4b45b026da252aa46fecf0867e/plugin.js",
+      "scriptPath": "plugins/xiaohongshu/plugin.js",
+      "scriptURL": "https://raw.githubusercontent.com/qoli/eisonAI3-Plugins/main/plugins/xiaohongshu/plugin.js",
       "sha256": "b1a7ccdee17cc71d7ce8f07deab765d1952d6b20f314a309a7f58d17ea0d556d",
       "startURL": "https://www.xiaohongshu.com/explore"
     },
     {
       "id": "x.likes",
       "displayName": "X Likes",
-      "scriptURL": "https://raw.githubusercontent.com/qoli/eisonAI3-Plugin-X/ee7239549fdc752c33a55783e68e9d124962f8ed/plugin.js",
+      "scriptPath": "plugins/x/plugin.js",
+      "scriptURL": "https://raw.githubusercontent.com/qoli/eisonAI3-Plugins/main/plugins/x/plugin.js",
       "sha256": "94da96c0037ce66f2cd47f4c962b3768911f7408afc5994a693bf540a8eb7202",
       "startURL": "https://x.com/i/history/likes"
     }

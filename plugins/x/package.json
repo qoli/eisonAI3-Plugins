@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "validate": "node ../eisonAI3-PluginProtocol/scripts/validate-plugin.mjs plugin.js",
+    "validate": "node ../../protocol/scripts/validate-plugin.mjs plugin.js",
     "check": "npm run validate && npm test"
   },
   "devDependencies": {

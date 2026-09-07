@@ -38,9 +38,8 @@ npm install
 npm test
 ```
 
-`npm test` runs DOM fixture tests with LinkeDOM and then invokes the validator
-from the sibling `../eisonAI3-PluginProtocol` repository. Keep both repositories
-next to each other when validating locally.
+`npm test` runs DOM fixture tests with LinkeDOM and then invokes the centralized
+validator under `protocol/`.
 
 ## Current validation boundary
 

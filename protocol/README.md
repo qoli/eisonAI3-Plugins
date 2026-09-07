@@ -43,20 +43,20 @@ not manufacture defaults or return a valid-looking empty collection.
 ## Validate a plugin
 
 ```bash
-node scripts/validate-plugin.mjs ../eisonAI3-Plugin-X/plugin.js
+node protocol/scripts/validate-plugin.mjs plugins/x/plugin.js
 ```
 
 The validator checks registration, manifest invariants, the single `run`
-interface, and the JSON-only `describe` response. Source repositories add DOM
+interface, and the JSON-only `describe` response. Plugin directories add DOM
 fixture tests for their own `probe`, `collect`, and `detail` operations.
 
 ## Registry
 
-[`registry.json`](./registry.json) is the independently updateable catalog read
-by eisonAI3. Each entry points to `plugin.js` at an immutable Git commit and
-includes its SHA-256 digest. Updating a plugin does not require an App Store
-binary release, but activating new bytes always requires an explicit registry
-change with a matching digest.
+[`registry.json`](../registry.json) is the independently updateable catalog read
+by eisonAI3. Each entry points to its centralized `plugin.js` and includes its
+SHA-256 digest. Updating a plugin does not require an App Store binary release,
+but activating new bytes always requires the same pull request to update the
+registry with a matching digest.
 
 ```bash
 npm run validate:registry

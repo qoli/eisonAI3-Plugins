@@ -1,0 +1,13 @@
+{
+  "name": "eisonai3-plugins-store",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test:protocol": "node --test protocol/tests/*.test.mjs",
+    "test:x": "npm --prefix plugins/x run check",
+    "test:xiaohongshu": "npm --prefix plugins/xiaohongshu test",
+    "validate:registry": "node protocol/scripts/validate-registry.mjs --local",
+    "check": "npm run test:protocol && npm run test:x && npm run test:xiaohongshu && npm run validate:registry"
+  }
+}
