@@ -44,6 +44,7 @@ test("registers exactly once and describes the draft-v0 manifest", async () => {
   const response = await plugin.run({ operation: "describe" });
   assert.equal(response.status, "ready");
   assert.equal(response.manifest.id, "x.likes");
+  assert.equal(response.manifest.loginURL, "https://x.com/i/flow/login");
   assert.equal(response.manifest.capabilities.detailNavigation, false);
 });
 

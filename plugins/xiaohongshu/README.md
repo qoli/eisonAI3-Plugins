@@ -4,6 +4,9 @@ Xiaohongshu browser collector for the draft eisonAI3 JavaScript plugin
 protocol. The distributable runtime artifact is the single self-contained
 [`plugin.js`](./plugin.js) file.
 
+The manifest declares `https://www.xiaohongshu.com/website-login` as the
+host-driven sign-in destination.
+
 It supports four host operations:
 
 - `describe`: returns its draft-v0 manifest.

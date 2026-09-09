@@ -38,6 +38,10 @@ export function validateManifest(manifest) {
     const url = new URL(origin);
     invariant(url.protocol === "https:" && url.origin === origin, `plugin allowed origin is invalid: ${origin}`);
   }
+  invariant(typeof value.loginURL === "string" && value.loginURL.length > 0, "plugin manifest loginURL is required");
+  const loginURL = new URL(value.loginURL);
+  invariant(loginURL.protocol === "https:", "plugin manifest loginURL must use HTTPS");
+  invariant(value.allowedOrigins.includes(loginURL.origin), "plugin manifest loginURL origin must be allowed");
   invariant(Array.isArray(value.collections) && value.collections.length > 0, "plugin manifest collections is required");
   invariant(value.capabilities && typeof value.capabilities === "object", "plugin manifest capabilities is required");
   for (const key of ["sourceSavedAt", "resumableCursor", "detailNavigation", "orderedMedia"]) {

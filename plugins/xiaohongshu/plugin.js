@@ -5,7 +5,8 @@
     id: "xiaohongshu",
     displayName: "小紅書",
     protocolVersion: 0,
-    revision: "draft-0.1.0",
+    revision: "draft-0.2.0",
+    loginURL: "https://www.xiaohongshu.com/website-login",
     allowedOrigins: ["https://www.xiaohongshu.com"],
     collections: [
       { id: "favorites", displayName: "收藏", kind: "favorite" },

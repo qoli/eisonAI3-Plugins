@@ -8,6 +8,9 @@ The plugin reads the current `https://x.com/i/history/likes` DOM inside a named
 persist checkpoints, write a database, or download media. Those capabilities
 belong to the eisonAI3 native host.
 
+The manifest declares `https://x.com/i/flow/login` as the host-driven sign-in
+destination.
+
 ## Operations
 
 - `describe` returns the immutable draft-v0 manifest without reading the page.

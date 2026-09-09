@@ -27,6 +27,10 @@ The plugin registers exactly once with:
 }
 ```
 
+Every manifest declares a required HTTPS `loginURL`. Its origin must appear in
+`allowedOrigins`; the native host uses this verified URL for an explicit sign-in
+action instead of guessing a login route from the source homepage.
+
 `run` is the only behavioural interface. Draft operations are:
 
 - `describe`: return the manifest without reading page state.

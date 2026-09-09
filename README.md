@@ -8,6 +8,9 @@ Community contributors add or update a plugin through a pull request to this
 repository. A plugin's production artifact remains one self-contained
 `plugin.js`; test files and fixtures stay beside it for review.
 
+Each plugin manifest declares a verified HTTPS `loginURL` so the native host
+can take signed-out users directly to that source's sign-in page.
+
 ## Layout
 
 ```text
@@ -33,4 +36,3 @@ npm run check
 ```
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) to add a source plugin.
-

@@ -27,10 +27,12 @@ The protocol and validator live under `protocol/`.
 2. Cover `describe`, `probe`, `collect`, and `detail` behaviour.
 3. Preserve explicit `needsLogin`, `needsUserVerification`,
    `sourceStructureChanged`, and `endUnconfirmed` states where applicable.
-4. Do not report `endConfirmed` without positive terminal evidence.
-5. Update the plugin entry in `registry.json`, including `scriptPath`,
+4. Declare a required HTTPS `loginURL` whose origin is listed in
+   `allowedOrigins`.
+5. Do not report `endConfirmed` without positive terminal evidence.
+6. Update the plugin entry in `registry.json`, including `scriptPath`,
    `scriptURL`, and the exact lowercase SHA-256 of `plugin.js`.
-6. Run `npm run check` at the repository root.
+7. Run `npm run check` at the repository root.
 
 The registry hash is the runtime identity recorded with imported data. A hash
 mismatch fails plugin activation explicitly; the App does not silently execute

@@ -6,7 +6,7 @@
       "displayName": "小紅書",
       "scriptPath": "plugins/xiaohongshu/plugin.js",
       "scriptURL": "https://raw.githubusercontent.com/qoli/eisonAI3-Plugins/main/plugins/xiaohongshu/plugin.js",
-      "sha256": "b1a7ccdee17cc71d7ce8f07deab765d1952d6b20f314a309a7f58d17ea0d556d",
+      "sha256": "6564d90918808f9bf8d5453296e0cfc15a789843160072dd62d66b0b5a891baa",
       "startURL": "https://www.xiaohongshu.com/explore"
     },
     {
@@ -14,7 +14,7 @@
       "displayName": "X Likes",
       "scriptPath": "plugins/x/plugin.js",
       "scriptURL": "https://raw.githubusercontent.com/qoli/eisonAI3-Plugins/main/plugins/x/plugin.js",
-      "sha256": "94da96c0037ce66f2cd47f4c962b3768911f7408afc5994a693bf540a8eb7202",
+      "sha256": "da047834f20577c582fe75ef8a4d4a06abbe3bab6326b4025acf490f0c22d9fc",
       "startURL": "https://x.com/i/history/likes"
     }
   ]

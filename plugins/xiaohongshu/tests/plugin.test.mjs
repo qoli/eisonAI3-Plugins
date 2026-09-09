@@ -48,6 +48,7 @@ test("describe returns the two distinct collections", async () => {
   const response = await plugin.run({ operation: "describe" });
   assert.equal(response.status, "ready");
   assert.deepEqual(Array.from(response.manifest.collections, item => item.id), ["favorites", "liked"]);
+  assert.equal(response.manifest.loginURL, "https://www.xiaohongshu.com/website-login");
 });
 
 test("probe verifies the active favorite source and account", async () => {

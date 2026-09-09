@@ -13,6 +13,7 @@ export interface PluginManifest {
   displayName: string;
   protocolVersion: 0;
   revision: string;
+  loginURL: string;
   allowedOrigins: string[];
   collections: Array<{
     id: string;
