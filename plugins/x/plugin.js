@@ -5,7 +5,7 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.4.4",
+    revision: "draft-v0.4.5",
     loginURL: "https://x.com/i/flow/login",
     browserProfile: "mobileSafari",
     collections: [
@@ -180,6 +180,20 @@
       }));
   }
 
+  function topLeftAccountStructure() {
+    const ancestors = [];
+    let element = document.elementFromPoint(20, 145);
+    for (let depth = 0; element && depth < 9; depth += 1, element = element.parentElement) {
+      ancestors.push({
+        tag: element.tagName.toLowerCase(),
+        role: element.getAttribute("role"),
+        testID: element.getAttribute("data-testid"),
+        hasHref: element.hasAttribute("href")
+      });
+    }
+    return ancestors;
+  }
+
   function structureProblem() {
     const primaryColumn = document.querySelector('[data-testid="primaryColumn"]');
     if (!primaryColumn) {
@@ -210,6 +224,7 @@
             '[data-testid="SideNav_AccountSwitcher_Button"]',
             'a[href]:has(img):not(article[data-testid="tweet"] *, [data-testid="UserCell"] *)'
           ],
+          topLeftAccountStructure: topLeftAccountStructure(),
           compactIdentityStructure: compactIdentityStructure(),
           compactInteractiveStructure: compactInteractiveStructure()
         })
