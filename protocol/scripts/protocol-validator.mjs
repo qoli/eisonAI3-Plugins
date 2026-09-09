@@ -34,7 +34,7 @@ export function validateManifest(manifest) {
   invariant(value.protocolVersion === 0, "plugin manifest protocolVersion must be 0");
   invariant(typeof value.revision === "string" && value.revision.length > 0, "plugin manifest revision is required");
   if (value.browserProfile !== undefined) {
-    invariant(value.browserProfile === "systemSafari", "plugin manifest browserProfile is invalid");
+    invariant(value.browserProfile === "mobileSafari", "plugin manifest browserProfile is invalid");
   }
   invariant(typeof value.loginURL === "string" && value.loginURL.length > 0, "plugin manifest loginURL is required");
   const loginURL = new URL(value.loginURL);

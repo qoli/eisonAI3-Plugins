@@ -5,9 +5,9 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.4.0",
+    revision: "draft-v0.4.1",
     loginURL: "https://x.com/i/flow/login",
-    browserProfile: "systemSafari",
+    browserProfile: "mobileSafari",
     collections: [
       { id: "likes", displayName: "Likes", kind: "like" }
     ],
@@ -104,15 +104,30 @@
 
   function sourceAccount() {
     const accountControl = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
-    if (!accountControl) return null;
-    const lines = String(accountControl.innerText || accountControl.textContent || "")
-      .split("\n")
-      .map(clean)
-      .filter(Boolean);
-    const handle = lines.find(line => /^@[A-Za-z0-9_]{1,15}$/.test(line));
-    if (!handle) return null;
-    const displayName = lines.find(line => line !== handle && line !== "More");
-    return { id: handle.slice(1).toLowerCase(), displayName: displayName || null };
+    if (accountControl) {
+      const lines = String(accountControl.innerText || accountControl.textContent || "")
+        .split("\n")
+        .map(clean)
+        .filter(Boolean);
+      const handle = lines.find(line => /^@[A-Za-z0-9_]{1,15}$/.test(line));
+      if (handle) {
+        const displayName = lines.find(line => line !== handle && line !== "More");
+        return { id: handle.slice(1).toLowerCase(), displayName: displayName || null };
+      }
+    }
+
+    const profileLink = document.querySelector('a[data-testid="AppTabBar_Profile_Link"][href]');
+    if (!profileLink) return null;
+    let profileURL;
+    try {
+      profileURL = new URL(profileLink.getAttribute("href"), location.href);
+    } catch (error) {
+      return null;
+    }
+    if (profileURL.origin !== "https://x.com") return null;
+    const match = profileURL.pathname.match(/^\/([A-Za-z0-9_]{1,15})\/?$/);
+    if (!match) return null;
+    return { id: match[1].toLowerCase(), displayName: null };
   }
 
   function structureProblem() {
@@ -141,7 +156,10 @@
         status: "sourceStructureChanged",
         diagnostics: pageDiagnostics({
           invariant: "authenticated source account identity was not found",
-          selector: '[data-testid="SideNav_AccountSwitcher_Button"]'
+          selectors: [
+            '[data-testid="SideNav_AccountSwitcher_Button"]',
+            'a[data-testid="AppTabBar_Profile_Link"][href]'
+          ]
         })
       };
     }

@@ -33,7 +33,7 @@ from the source homepage. Subsequent HTTPS redirects remain browser navigation
 and are not predicted by the plugin contract.
 
 A plugin that requires browser-compatible server routing may declare the
-optional `browserProfile` value `systemSafari` in both its registry descriptor
+optional `browserProfile` value `mobileSafari` in both its registry descriptor
 and manifest. The host applies that profile before loading `startURL` and
 rejects a manifest whose declaration does not match the registry. Plugins that
 do not declare a profile retain the native embedded-WebView identity.

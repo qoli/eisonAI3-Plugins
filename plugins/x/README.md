@@ -9,7 +9,7 @@ persist checkpoints, write a database, or download media. Those capabilities
 belong to the eisonAI3 native host.
 
 The manifest declares `https://x.com/i/flow/login` as the host-driven sign-in
-destination. It also declares the `systemSafari` browser profile because X
+destination. It also declares the `mobileSafari` browser profile because X
 redirects Likes routes away from an embedded-WebView identity before plugin
 JavaScript can run. The native host applies the declared profile generically;
 the plugin remains responsible for requesting and matching it.

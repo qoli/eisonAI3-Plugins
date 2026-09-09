@@ -27,7 +27,7 @@ for (const descriptor of registry.plugins) {
   invariant(/^[0-9a-f]{64}$/.test(descriptor.sha256), `plugin sha256 is invalid: ${descriptor.id}`);
   invariant(/^https:\/\//.test(descriptor.startURL), `plugin startURL must use HTTPS: ${descriptor.id}`);
   if (descriptor.browserProfile !== undefined) {
-    invariant(descriptor.browserProfile === "systemSafari", `plugin browserProfile is invalid: ${descriptor.id}`);
+    invariant(descriptor.browserProfile === "mobileSafari", `plugin browserProfile is invalid: ${descriptor.id}`);
   }
 
   let source;

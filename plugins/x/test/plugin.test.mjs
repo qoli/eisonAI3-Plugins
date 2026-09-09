@@ -45,7 +45,7 @@ test("registers exactly once and describes the draft-v0 manifest", async () => {
   assert.equal(response.status, "ready");
   assert.equal(response.manifest.id, "x.likes");
   assert.equal(response.manifest.loginURL, "https://x.com/i/flow/login");
-  assert.equal(response.manifest.browserProfile, "systemSafari");
+  assert.equal(response.manifest.browserProfile, "mobileSafari");
   assert.equal(response.manifest.capabilities.detailNavigation, false);
 });
 
@@ -58,6 +58,31 @@ test("probe verifies the authenticated source account", async () => {
     id: "ronniewong",
     displayName: "Ronnie"
   });
+});
+
+test("probe verifies the authenticated source account in the compact navigation", async () => {
+  const html = `
+    <a data-testid="AppTabBar_Profile_Link" href="/RonnieWong">Profile</a>
+    <main data-testid="primaryColumn"></main>
+  `;
+  const plugin = loadPlugin(html);
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "ready");
+  assert.deepEqual(JSON.parse(JSON.stringify(response.sourceAccount)), {
+    id: "ronniewong",
+    displayName: null
+  });
+});
+
+test("compact navigation does not infer identity from a non-profile route", async () => {
+  const html = `
+    <a data-testid="AppTabBar_Profile_Link" href="/i/history/likes">Profile</a>
+    <main data-testid="primaryColumn"></main>
+  `;
+  const plugin = loadPlugin(html);
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "sourceStructureChanged");
+  assert.match(response.diagnostics.invariant, /source account identity/);
 });
 
 test("probe returns explicit login and verification states", async () => {

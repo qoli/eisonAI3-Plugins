@@ -46,7 +46,7 @@ test("rejects unknown browser profiles", () => {
     protocolVersion: 0,
     revision: "fixture-1",
     loginURL: "https://example.com/login",
-    browserProfile: "pretend-browser",
+    browserProfile: "systemSafari",
     collections: [{ id: "favorites", displayName: "Favorites", kind: "favorite" }],
     capabilities: {
       sourceSavedAt: false,

@@ -1,5 +1,5 @@
 export type PluginOperation = "describe" | "probe" | "collect" | "detail";
-export type PluginBrowserProfile = "systemSafari";
+export type PluginBrowserProfile = "mobileSafari";
 
 export interface PluginRequest {
   operation: PluginOperation;
