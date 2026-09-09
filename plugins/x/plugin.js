@@ -5,7 +5,7 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.4.5",
+    revision: "draft-v0.4.6",
     loginURL: "https://x.com/i/flow/login",
     browserProfile: "mobileSafari",
     collections: [
@@ -224,7 +224,7 @@
             '[data-testid="SideNav_AccountSwitcher_Button"]',
             'a[href]:has(img):not(article[data-testid="tweet"] *, [data-testid="UserCell"] *)'
           ],
-          topLeftAccountStructure: topLeftAccountStructure(),
+          accountControlStructure: topLeftAccountStructure(),
           compactIdentityStructure: compactIdentityStructure(),
           compactInteractiveStructure: compactInteractiveStructure()
         })
