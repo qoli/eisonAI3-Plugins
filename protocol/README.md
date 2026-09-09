@@ -31,6 +31,12 @@ Every manifest declares a required HTTPS `loginURL`. Its origin must appear in
 `allowedOrigins`; the native host uses this verified URL for an explicit sign-in
 action instead of guessing a login route from the source homepage.
 
+A plugin that requires browser-compatible server routing may declare the
+optional `browserProfile` value `systemSafari` in both its registry descriptor
+and manifest. The host applies that profile before loading `startURL` and
+rejects a manifest whose declaration does not match the registry. Plugins that
+do not declare a profile retain the native embedded-WebView identity.
+
 `run` is the only behavioural interface. Draft operations are:
 
 - `describe`: return the manifest without reading page state.

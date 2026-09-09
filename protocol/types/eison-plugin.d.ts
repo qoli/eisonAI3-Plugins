@@ -1,4 +1,5 @@
 export type PluginOperation = "describe" | "probe" | "collect" | "detail";
+export type PluginBrowserProfile = "systemSafari";
 
 export interface PluginRequest {
   operation: PluginOperation;
@@ -15,6 +16,7 @@ export interface PluginManifest {
   revision: string;
   loginURL: string;
   allowedOrigins: string[];
+  browserProfile?: PluginBrowserProfile;
   collections: Array<{
     id: string;
     displayName: string;

@@ -5,9 +5,10 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.2.0",
+    revision: "draft-v0.3.1",
     loginURL: "https://x.com/i/flow/login",
     allowedOrigins: ["https://x.com"],
+    browserProfile: "systemSafari",
     collections: [
       { id: "likes", displayName: "Likes", kind: "like" }
     ],
@@ -74,7 +75,12 @@
     const loginControl = document.querySelector(
       '[data-testid="loginButton"], a[href="/login"], a[href^="/i/flow/login"]'
     );
-    if (loginControl || location.pathname === "/login" || location.pathname.startsWith("/i/flow/login")) {
+    if (
+      loginControl
+      || location.pathname === "/login"
+      || location.pathname.startsWith("/i/flow/login")
+      || location.pathname.startsWith("/i/jf/onboarding/web")
+    ) {
       return {
         status: "needsLogin",
         collectionID: "likes",

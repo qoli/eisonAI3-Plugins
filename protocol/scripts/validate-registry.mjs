@@ -26,6 +26,9 @@ for (const descriptor of registry.plugins) {
   invariant(/^plugins\/[a-z0-9.-]+\/plugin\.js$/.test(descriptor.scriptPath), `plugin scriptPath is invalid: ${descriptor.id}`);
   invariant(/^[0-9a-f]{64}$/.test(descriptor.sha256), `plugin sha256 is invalid: ${descriptor.id}`);
   invariant(/^https:\/\//.test(descriptor.startURL), `plugin startURL must use HTTPS: ${descriptor.id}`);
+  if (descriptor.browserProfile !== undefined) {
+    invariant(descriptor.browserProfile === "systemSafari", `plugin browserProfile is invalid: ${descriptor.id}`);
+  }
 
   let source;
   if (useLocalArtifacts) {
@@ -41,5 +44,9 @@ for (const descriptor of registry.plugins) {
   await writeFile(path, source);
   const plugin = await loadPlugin(path);
   invariant(plugin.manifest.id === descriptor.id, `plugin manifest id mismatch for ${descriptor.id}`);
+  invariant(
+    plugin.manifest.browserProfile === descriptor.browserProfile,
+    `plugin browserProfile mismatch for ${descriptor.id}`
+  );
   process.stdout.write(`${descriptor.id} ${descriptor.sha256}: registry artifact valid\n`);
 }

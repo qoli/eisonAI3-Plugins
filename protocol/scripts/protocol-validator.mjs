@@ -33,6 +33,9 @@ export function validateManifest(manifest) {
   invariant(typeof value.displayName === "string" && value.displayName.length > 0, "plugin manifest displayName is required");
   invariant(value.protocolVersion === 0, "plugin manifest protocolVersion must be 0");
   invariant(typeof value.revision === "string" && value.revision.length > 0, "plugin manifest revision is required");
+  if (value.browserProfile !== undefined) {
+    invariant(value.browserProfile === "systemSafari", "plugin manifest browserProfile is invalid");
+  }
   invariant(Array.isArray(value.allowedOrigins) && value.allowedOrigins.length > 0, "plugin manifest allowedOrigins is required");
   for (const origin of value.allowedOrigins) {
     const url = new URL(origin);

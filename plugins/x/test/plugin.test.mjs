@@ -45,6 +45,7 @@ test("registers exactly once and describes the draft-v0 manifest", async () => {
   assert.equal(response.status, "ready");
   assert.equal(response.manifest.id, "x.likes");
   assert.equal(response.manifest.loginURL, "https://x.com/i/flow/login");
+  assert.equal(response.manifest.browserProfile, "systemSafari");
   assert.equal(response.manifest.capabilities.detailNavigation, false);
 });
 
@@ -65,6 +66,12 @@ test("probe returns explicit login and verification states", async () => {
 
   const loginRedirect = loadPlugin("<html></html>", "https://x.com/i/flow/login");
   assert.equal((await loginRedirect.run({ operation: "probe" })).status, "needsLogin");
+
+  const onboarding = loadPlugin(
+    "<html></html>",
+    "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fi%2Fhistory%2Flikes&mode=login"
+  );
+  assert.equal((await onboarding.run({ operation: "probe" })).status, "needsLogin");
 
   const verification = loadPlugin('<iframe src="https://client-api.arkoselabs.com/challenge"></iframe>');
   assert.equal((await verification.run({ operation: "probe" })).status, "needsUserVerification");

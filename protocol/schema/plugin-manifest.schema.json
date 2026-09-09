@@ -26,6 +26,7 @@
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^https://" }
     },
+    "browserProfile": { "enum": ["systemSafari"] },
     "collections": {
       "type": "array",
       "minItems": 1,
