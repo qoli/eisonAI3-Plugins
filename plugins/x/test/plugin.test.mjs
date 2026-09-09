@@ -9,6 +9,7 @@ const likesFixture = await readFile(new URL("./fixtures/likes.html", import.meta
 
 function loadPlugin(html, href = "https://x.com/i/history/likes") {
   const { document, window } = parseHTML(html);
+  document.elementFromPoint = () => null;
   const url = new URL(href);
   let plugin = null;
   let registrationCount = 0;
