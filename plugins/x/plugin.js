@@ -5,7 +5,7 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.4.2",
+    revision: "draft-v0.4.3",
     loginURL: "https://x.com/i/flow/login",
     browserProfile: "mobileSafari",
     collections: [
@@ -138,6 +138,25 @@
     return compactAccounts.values().next().value;
   }
 
+  function compactIdentityStructure() {
+    return [...document.querySelectorAll("img")]
+      .filter(image => !image.closest('article[data-testid="tweet"], [data-testid="UserCell"]'))
+      .slice(0, 8)
+      .map(image => {
+        const ancestors = [];
+        let element = image;
+        for (let depth = 0; element && depth < 7; depth += 1, element = element.parentElement) {
+          ancestors.push({
+            tag: element.tagName.toLowerCase(),
+            role: element.getAttribute("role"),
+            testID: element.getAttribute("data-testid"),
+            hasHref: element.hasAttribute("href")
+          });
+        }
+        return ancestors;
+      });
+  }
+
   function structureProblem() {
     const primaryColumn = document.querySelector('[data-testid="primaryColumn"]');
     if (!primaryColumn) {
@@ -167,7 +186,8 @@
           selectors: [
             '[data-testid="SideNav_AccountSwitcher_Button"]',
             'a[href]:has(img):not(article[data-testid="tweet"] *, [data-testid="UserCell"] *)'
-          ]
+          ],
+          compactIdentityStructure: compactIdentityStructure()
         })
       };
     }
