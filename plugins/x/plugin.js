@@ -5,7 +5,7 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.4.3",
+    revision: "draft-v0.4.4",
     loginURL: "https://x.com/i/flow/login",
     browserProfile: "mobileSafari",
     collections: [
@@ -157,6 +157,29 @@
       });
   }
 
+  function compactInteractiveStructure() {
+    return [...document.querySelectorAll('a[href], button, [role="button"]')]
+      .filter(element => !element.closest('article[data-testid="tweet"], [data-testid="UserCell"]'))
+      .map(element => ({ element, rect: element.getBoundingClientRect() }))
+      .filter(candidate => candidate.rect.width > 0 && candidate.rect.height > 0)
+      .sort((left, right) => left.rect.top - right.rect.top || left.rect.left - right.rect.left)
+      .slice(0, 30)
+      .map(({ element, rect }) => ({
+        tag: element.tagName.toLowerCase(),
+        role: element.getAttribute("role"),
+        testID: element.getAttribute("data-testid"),
+        hasHref: element.hasAttribute("href"),
+        hasImage: Boolean(element.querySelector("img")),
+        hasSVG: Boolean(element.querySelector("svg")),
+        rect: {
+          x: Math.round(rect.left),
+          y: Math.round(rect.top),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height)
+        }
+      }));
+  }
+
   function structureProblem() {
     const primaryColumn = document.querySelector('[data-testid="primaryColumn"]');
     if (!primaryColumn) {
@@ -187,7 +210,8 @@
             '[data-testid="SideNav_AccountSwitcher_Button"]',
             'a[href]:has(img):not(article[data-testid="tweet"] *, [data-testid="UserCell"] *)'
           ],
-          compactIdentityStructure: compactIdentityStructure()
+          compactIdentityStructure: compactIdentityStructure(),
+          compactInteractiveStructure: compactInteractiveStructure()
         })
       };
     }
