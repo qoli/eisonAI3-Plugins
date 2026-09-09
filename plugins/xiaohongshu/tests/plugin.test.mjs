@@ -18,6 +18,19 @@ function loadFixture(body, url, { viewport } = {}) {
     location,
     innerHeight: viewport?.innerHeight ?? 800,
     scrollY: viewport?.scrollY ?? 0,
+    getComputedStyle(node) {
+      const style = node.getAttribute?.("style") || "";
+      const declarations = Object.fromEntries(
+        style.split(";")
+          .map(item => item.split(":", 2).map(value => value.trim()))
+          .filter(item => item.length === 2 && item[0])
+      );
+      return {
+        display: declarations.display || "block",
+        visibility: declarations.visibility || "visible",
+        opacity: declarations.opacity || "1"
+      };
+    },
     eison: { registerPlugin(value) { plugin = value; } }
   };
   sandbox.globalThis = sandbox;
@@ -32,14 +45,18 @@ function favoritePage(extra = "") {
     <main class="user-page">
       <h1 class="user-name">測試帳號</h1>
       <div class="reds-tab-item active sub-tab-list">收藏</div>
-      <div class="feeds-container">
-        <section class="note-item" data-note-id="note-1">
-          <a class="cover" href="https://www.xiaohongshu.com/explore/note-1?xsec_token=token"><img src="https://sns-img.example/cover.webp" width="1200" height="1600"></a>
-          <a class="title">第一篇筆記</a>
-          <a class="author" href="https://www.xiaohongshu.com/user/profile/author-1?xsec_source=pc_collect">作者甲</a>
-        </section>
+      <div class="feeds-tab-container">
+        <div class="tab-content-item">
+          <div class="feeds-container">
+            <section class="note-item" data-note-id="note-1">
+              <a class="cover" href="https://www.xiaohongshu.com/explore/note-1?xsec_token=token"><img src="https://sns-img.example/cover.webp" width="1200" height="1600"></a>
+              <a class="title">第一篇筆記</a>
+              <a class="author" href="https://www.xiaohongshu.com/user/profile/author-1?xsec_source=pc_collect">作者甲</a>
+            </section>
+          </div>
+          ${extra}
+        </div>
       </div>
-      ${extra}
     </main>`;
 }
 
@@ -48,7 +65,8 @@ test("describe returns the two distinct collections", async () => {
   const response = await plugin.run({ operation: "describe" });
   assert.equal(response.status, "ready");
   assert.deepEqual(Array.from(response.manifest.collections, item => item.id), ["favorites", "liked"]);
-  assert.equal(response.manifest.loginURL, "https://www.xiaohongshu.com/website-login");
+  assert.equal(response.manifest.loginURL, "https://www.xiaohongshu.com/explore");
+  assert.equal(response.manifest.browserProfile, "desktopSafari");
 });
 
 test("probe verifies the active favorite source and account", async () => {
@@ -59,10 +77,8 @@ test("probe verifies the active favorite source and account", async () => {
   assert.equal(response.sourceAccount.id, "account-123");
 });
 
-test("liked remains a distinct collection with its own source marker", async () => {
-  const html = favoritePage()
-    .replace("收藏", "点赞")
-    .replace("pc_collect", "pc_like");
+test("liked remains a distinct collection through its active tab", async () => {
+  const html = favoritePage().replace("收藏", "点赞");
   const likedURL = "https://www.xiaohongshu.com/user/profile/account-123?tab=liked&subTab=note";
   const plugin = loadFixture(html, likedURL);
   const response = await plugin.run({ operation: "collect", collectionID: "liked" });
@@ -80,16 +96,97 @@ test("collect returns a canonical visible batch without persistence concerns", a
   assert.equal(response.next.kind, "scroll");
 });
 
-test("collection marker mismatch is a source structure error", async () => {
-  const html = favoritePage().replace("pc_collect", "pc_like");
+test("tracking parameters do not define collection identity", async () => {
+  const html = favoritePage().replace("?xsec_source=pc_collect", "");
+  const plugin = loadFixture(html, profile);
+  const response = await plugin.run({ operation: "collect", collectionID: "favorites" });
+  assert.equal(response.status, "batch");
+  assert.equal(response.records[0].author.profileURL, "https://www.xiaohongshu.com/user/profile/author-1");
+});
+
+test("profile collection detail routes retain their live tokenized URL", async () => {
+  const html = favoritePage().replace(
+    "https://www.xiaohongshu.com/explore/note-1?xsec_token=token",
+    "https://www.xiaohongshu.com/user/profile/author-1/note-1?xsec_token=token&xsec_source=pc_user"
+  );
+  const plugin = loadFixture(html, profile);
+  const response = await plugin.run({ operation: "collect", collectionID: "favorites" });
+  assert.equal(response.status, "batch");
+  assert.equal(response.records[0].canonicalURL, "https://www.xiaohongshu.com/explore/note-1");
+  assert.equal(
+    response.records[0].detailURL,
+    "https://www.xiaohongshu.com/user/profile/author-1/note-1?xsec_token=token&xsec_source=pc_user"
+  );
+});
+
+test("collect reads only the active collection panel", async () => {
+  const card = (id, title) => `
+    <div class="feeds-container">
+      <section class="note-item" data-note-id="${id}">
+        <a class="cover" href="https://www.xiaohongshu.com/explore/${id}?xsec_token=token"><img src="https://sns-img.example/${id}.webp"></a>
+        <a class="title">${title}</a>
+        <a class="author" href="https://www.xiaohongshu.com/user/profile/author-1">作者甲</a>
+      </section>
+    </div>`;
+  const html = `
+    <main class="user-page">
+      <h1 class="user-name">測試帳號</h1>
+      <div class="reds-tab-item sub-tab-list">筆記</div>
+      <div class="reds-tab-item active sub-tab-list">收藏</div>
+      <div class="reds-tab-item sub-tab-list">點讚</div>
+      <div class="feeds-tab-container">
+        <div class="tab-content-item" style="height: 0px">${card("own-note", "我的筆記")}</div>
+        <div class="tab-content-item">${card("favorite-note", "我的收藏")}</div>
+        <div class="tab-content-item" style="height: 0px">${card("liked-note", "我的點讚")}</div>
+      </div>
+    </main>`;
+  const plugin = loadFixture(html, profile);
+  const response = await plugin.run({ operation: "collect", collectionID: "favorites" });
+  assert.equal(response.status, "batch");
+  assert.deepEqual(Array.from(response.records, record => record.id), ["favorite-note"]);
+});
+
+test("active tab index wins when the previous panel remains expanded", async () => {
+  const card = id => `
+    <div class="feeds-container">
+      <section class="note-item" data-note-id="${id}">
+        <a class="cover" href="https://www.xiaohongshu.com/explore/${id}?xsec_token=token"><img src="https://sns-img.example/${id}.webp"></a>
+        <a class="author" href="https://www.xiaohongshu.com/user/profile/author-1">作者甲</a>
+      </section>
+    </div>`;
+  const html = `
+    <main class="user-page">
+      <h1 class="user-name">測試帳號</h1>
+      <div class="reds-tab-item sub-tab-list">筆記</div>
+      <div class="reds-tab-item sub-tab-list">收藏</div>
+      <div class="reds-tab-item active sub-tab-list">点赞</div>
+      <div class="feeds-tab-container">
+        <div class="tab-content-item" style="height: 0px">${card("own-note")}</div>
+        <div class="tab-content-item">${card("favorite-note")}</div>
+        <div class="tab-content-item">${card("liked-note")}</div>
+      </div>
+    </main>`;
+  const plugin = loadFixture(html, "https://www.xiaohongshu.com/user/profile/account-123?tab=liked&subTab=note");
+  const response = await plugin.run({ operation: "collect", collectionID: "liked" });
+  assert.equal(response.status, "batch");
+  assert.deepEqual(Array.from(response.records, record => record.id), ["liked-note"]);
+});
+
+test("invalid detail diagnostics never include query tokens", async () => {
+  const html = favoritePage().replace(
+    "https://www.xiaohongshu.com/explore/note-1?xsec_token=token",
+    "https://www.xiaohongshu.com/not-a-note/note-1?xsec_token=secret"
+  );
   const plugin = loadFixture(html, profile);
   const response = await plugin.run({ operation: "collect", collectionID: "favorites" });
   assert.equal(response.status, "sourceStructureChanged");
-  assert.equal(response.diagnostics.code, "collectionSourceMarkerMismatch");
+  assert.equal(response.diagnostics.code, "invalidDetailURL");
+  assert.equal(response.diagnostics.detailPath, "/not-a-note/note-1");
+  assert.equal(JSON.stringify(response.diagnostics).includes("secret"), false);
 });
 
 test("an empty list never becomes endConfirmed without explicit stable evidence", async () => {
-  const html = `<main class="user-page"><div class="reds-tab-item active sub-tab-list">收藏</div><div class="feeds-container"></div></main>`;
+  const html = `<main class="user-page"><div class="reds-tab-item active sub-tab-list">收藏</div><div class="feeds-tab-container"><div class="tab-content-item"><div class="feeds-container"></div></div></div></main>`;
   const plugin = loadFixture(html, profile, { viewport: { scrollY: 400, innerHeight: 800, scrollHeight: 1200 } });
   const response = await plugin.run({ operation: "collect", collectionID: "favorites" });
   assert.equal(response.status, "endUnconfirmed");
@@ -115,6 +212,16 @@ test("login and verification are explicit states", async () => {
   assert.equal((await verificationPlugin.run({ operation: "probe", collectionID: "favorites" })).status, "needsUserVerification");
 });
 
+test("hidden login markup does not override an authenticated page", async () => {
+  const plugin = loadFixture(
+    `${favoritePage()}<div class="login-container" style="display: none">扫码登录</div>`,
+    profile
+  );
+  const response = await plugin.run({ operation: "probe", collectionID: "favorites" });
+  assert.equal(response.status, "ready");
+  assert.equal(response.sourceAccount.id, "account-123");
+});
+
 test("detail reads ordered rendered media and text", async () => {
   const html = `
     <article id="noteContainer">
@@ -128,6 +235,21 @@ test("detail reads ordered rendered media and text", async () => {
   assert.equal(response.status, "batch");
   assert.deepEqual(Array.from(response.records[0].media, item => item.order), [0, 1]);
   assert.equal(response.records[0].text, "完整正文");
+});
+
+test("detail keeps valid media when intrinsic dimensions are unavailable", async () => {
+  const html = `
+    <article id="noteContainer">
+      <h1 id="detail-title">完整標題</h1>
+      <div id="detail-desc">完整正文</div>
+      <div class="swiper-slide"><img src="https://sns-img.example/pending.webp"></div>
+    </article>`;
+  const plugin = loadFixture(html, "https://www.xiaohongshu.com/explore/note-1");
+  const response = await plugin.run({ operation: "detail", sourceItemID: "note-1" });
+  assert.equal(response.status, "batch");
+  assert.equal(response.records[0].media[0].url, "https://sns-img.example/pending.webp");
+  assert.equal(response.records[0].media[0].width, undefined);
+  assert.equal(response.records[0].media[0].height, undefined);
 });
 
 test("missing detail media is reported instead of returning partial data", async () => {

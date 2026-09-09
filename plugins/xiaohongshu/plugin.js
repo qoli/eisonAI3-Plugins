@@ -5,8 +5,9 @@
     id: "xiaohongshu",
     displayName: "小紅書",
     protocolVersion: 0,
-    revision: "draft-0.3.0",
-    loginURL: "https://www.xiaohongshu.com/website-login",
+    revision: "draft-0.3.6",
+    loginURL: "https://www.xiaohongshu.com/explore",
+    browserProfile: "desktopSafari",
     collections: [
       { id: "favorites", displayName: "收藏", kind: "favorite" },
       { id: "liked", displayName: "點讚", kind: "like" }
@@ -20,8 +21,8 @@
   });
 
   const COLLECTIONS = Object.freeze({
-    favorites: { activeText: "收藏", tab: "fav", sourceMarker: "pc_collect" },
-    liked: { activeText: "点赞", tab: "liked", sourceMarker: "pc_like" }
+    favorites: { activeText: "收藏", tab: "fav" },
+    liked: { activeText: "点赞", tab: "liked" }
   });
   const SOURCE_ORIGIN = "https://www.xiaohongshu.com";
   const END_TEXTS = new Set(["没有更多了", "沒有更多了", "已经到底了", "已經到底了", "到底了"]);
@@ -50,8 +51,25 @@
 
   function visibleText(selector) {
     return [...document.querySelectorAll(selector)]
+      .filter(isActuallyVisible)
       .map(node => clean(node.textContent))
       .filter(Boolean);
+  }
+
+  function isActuallyVisible(node) {
+    if (node.closest?.("[hidden], [aria-hidden='true']")) return false;
+    if (typeof globalThis.getComputedStyle === "function") {
+      for (let current = node; current; current = current.parentElement) {
+        const style = globalThis.getComputedStyle(current);
+        if (style.display === "none" ||
+            style.visibility === "hidden" ||
+            style.visibility === "collapse" ||
+            Number.parseFloat(style.opacity) === 0) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   function loginEvidence(url) {
@@ -102,6 +120,31 @@
     return entry ? { id: entry[0], activeText } : { id: null, activeText };
   }
 
+  function activeCollectionRoot() {
+    const tabs = [...document.querySelectorAll(".reds-tab-item.sub-tab-list")];
+    const activeTab = document.querySelector(".reds-tab-item.active.sub-tab-list");
+    const panels = [...document.querySelectorAll(".feeds-tab-container .tab-content-item")];
+    const activeIndex = tabs.indexOf(activeTab);
+    if (activeIndex < 0 || tabs.length !== panels.length) {
+      return {
+        error: diagnostics("collectionPanelMappingInvalid", {
+          tabCount: tabs.length,
+          panelCount: panels.length,
+          activeTabIndex: activeIndex
+        })
+      };
+    }
+    const activePanel = panels[activeIndex];
+    if (activePanel.style?.height === "0px") {
+      return { error: diagnostics("activeCollectionPanelCollapsed", { activeTabIndex: activeIndex }) };
+    }
+    const feedContainer = activePanel.querySelector(".feeds-container");
+    if (!feedContainer) {
+      return { error: diagnostics("feedContainerMissing", {}) };
+    }
+    return { panel: activePanel, feedContainer };
+  }
+
   function profileIdentity(url) {
     const match = url.pathname.match(/^\/user\/profile\/([^/]+)\/?$/);
     if (!match) return null;
@@ -146,7 +189,23 @@
         diagnostics: diagnostics("wrongCollectionActive", { requestedCollectionID: collectionID, activeCollectionID: active.id })
       };
     }
-    return { url: gate.url, collectionID, collection: COLLECTIONS[collectionID], account };
+    const root = activeCollectionRoot();
+    if (root.error) {
+      return {
+        status: "sourceStructureChanged",
+        collectionID,
+        sourceAccount: account,
+        diagnostics: root.error
+      };
+    }
+    return {
+      url: gate.url,
+      collectionID,
+      collection: COLLECTIONS[collectionID],
+      account,
+      collectionPanel: root.panel,
+      feedContainer: root.feedContainer
+    };
   }
 
   function normalizeCursor(cursor) {
@@ -176,8 +235,14 @@
     return media;
   }
 
-  function parseCards(collection) {
-    const cards = [...document.querySelectorAll(".feeds-container section.note-item[data-note-id]")];
+  function isDetailPath(pathname, itemID) {
+    const segments = pathname.split("/").filter(Boolean).map(decodeURIComponent);
+    return (segments.length === 2 && segments[0] === "explore" && segments[1] === itemID) ||
+      (segments.length === 4 && segments[0] === "user" && segments[1] === "profile" && segments[3] === itemID);
+  }
+
+  function parseCards(feedContainer) {
+    const cards = [...feedContainer.querySelectorAll("section.note-item[data-note-id]")];
     const records = [];
     for (const card of cards) {
       try {
@@ -190,22 +255,13 @@
           return { error: diagnostics("malformedNoteCard", { itemID: id }) };
         }
         const authorURL = new URL(author.href, location.href);
-        if (authorURL.searchParams.get("xsec_source") !== collection.sourceMarker) {
-          return {
-            error: diagnostics("collectionSourceMarkerMismatch", {
-              itemID: id,
-              expectedMarker: collection.sourceMarker,
-              actualMarker: authorURL.searchParams.get("xsec_source")
-            })
-          };
-        }
         const detailURL = new URL(cover.href, location.href);
-        if (detailURL.origin !== SOURCE_ORIGIN || !detailURL.pathname.startsWith(`/explore/${id}`)) {
-          return { error: diagnostics("invalidDetailURL", { itemID: id, detailURL: detailURL.href }) };
+        if (detailURL.origin !== SOURCE_ORIGIN || !isDetailPath(detailURL.pathname, id)) {
+          return { error: diagnostics("invalidDetailURL", { itemID: id, detailPath: detailURL.pathname }) };
         }
         records.push({
           id,
-          canonicalURL: `${detailURL.origin}${detailURL.pathname}`,
+          canonicalURL: `${SOURCE_ORIGIN}/explore/${encodeURIComponent(id)}`,
           detailURL: detailURL.href,
           author: { name: authorName, profileURL: `${authorURL.origin}${authorURL.pathname}` },
           title: clean(card.querySelector("a.title")?.textContent),
@@ -220,7 +276,7 @@
     return { cards, records };
   }
 
-  function pageProgress() {
+  function pageProgress(collectionPanel) {
     const root = document.documentElement;
     const scrollY = Number(globalThis.scrollY || 0);
     const viewportHeight = Number(globalThis.innerHeight || 0);
@@ -230,12 +286,15 @@
       viewportHeight,
       scrollHeight,
       atBottom: scrollHeight > 0 && scrollY + viewportHeight >= scrollHeight - 4,
-      progressIndicatorCount: document.querySelectorAll('[role="progressbar"], .loading, [class*="loading"]').length
+      progressIndicatorCount: collectionPanel.querySelectorAll('[role="progressbar"], .loading, [class*="loading"]').length
     };
   }
 
-  function explicitTerminalEvidence(collectionID) {
-    const texts = visibleText(".end-container, .feeds-end, [class*='end'], .empty, [class*='empty']");
+  function explicitTerminalEvidence(collectionID, collectionPanel) {
+    const texts = [...collectionPanel.querySelectorAll(".end-container, .feeds-end, [class*='end'], .empty, [class*='empty']")]
+      .filter(isActuallyVisible)
+      .map(node => clean(node.textContent))
+      .filter(Boolean);
     const endText = texts.find(text => END_TEXTS.has(text));
     const emptyText = texts.find(text => EMPTY_TEXTS[collectionID].has(text));
     return endText ? { kind: "endMarker", text: endText } : emptyText ? { kind: "emptyMarker", text: emptyText } : null;
@@ -244,24 +303,15 @@
   function probe(request) {
     const state = validateSourcePage(request);
     if (state.status) return state;
-    const feed = document.querySelector(".feeds-container");
-    const progress = pageProgress();
-    const terminal = explicitTerminalEvidence(state.collectionID);
-    if (!feed && !progress.progressIndicatorCount && !terminal) {
-      return {
-        status: "sourceStructureChanged",
-        collectionID: state.collectionID,
-        sourceAccount: state.account,
-        diagnostics: diagnostics("feedContainerMissing", { currentPath: state.url.pathname })
-      };
-    }
+    const progress = pageProgress(state.collectionPanel);
+    const terminal = explicitTerminalEvidence(state.collectionID, state.collectionPanel);
     return {
       status: "ready",
       collectionID: state.collectionID,
       sourceAccount: state.account,
       diagnostics: diagnostics("sourcePageVerified", {
         activeText: state.collection.activeText,
-        cardCount: document.querySelectorAll(".feeds-container section.note-item[data-note-id]").length,
+        cardCount: state.feedContainer.querySelectorAll("section.note-item[data-note-id]").length,
         loading: progress.progressIndicatorCount > 0,
         terminalEvidence: terminal
       })
@@ -287,7 +337,7 @@
         diagnostics: diagnostics("invalidLimit", { limit })
       };
     }
-    const parsed = parseCards(state.collection);
+    const parsed = parseCards(state.feedContainer);
     if (parsed.error) {
       return {
         status: "sourceStructureChanged",
@@ -300,8 +350,8 @@
     const newRecords = parsed.records.filter(record => !seen.has(record.id)).slice(0, limit);
     for (const record of newRecords) seen.add(record.id);
     const signature = parsed.records.map(record => record.id).join(",");
-    const progress = pageProgress();
-    const terminal = explicitTerminalEvidence(state.collectionID);
+    const progress = pageProgress(state.collectionPanel);
+    const terminal = explicitTerminalEvidence(state.collectionID, state.collectionPanel);
     const stableBottomReads = terminal && progress.atBottom && progress.progressIndicatorCount === 0
       ? cursor.signature === signature ? cursor.stableBottomReads + 1 : 1
       : 0;
@@ -401,13 +451,13 @@
         seenURLs.add(url);
         const width = Number(image.naturalWidth || image.getAttribute("width"));
         const height = Number(image.naturalHeight || image.getAttribute("height"));
-        if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(height) || height <= 0) {
-          return {
-            status: "sourceStructureChanged",
-            diagnostics: diagnostics("invalidDetailImageDimensions", { index: media.length, url })
-          };
+        const item = { type: "image", url, order: media.length };
+        if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
+          item.width = width;
+          item.height = height;
+          item.aspectRatio = width / height;
         }
-        media.push({ type: "image", url, width, height, aspectRatio: width / height, order: media.length });
+        media.push(item);
       }
     }
     if (media.length === 0) {

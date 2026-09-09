@@ -58,6 +58,26 @@ test("rejects unknown browser profiles", () => {
   assert.throws(() => validateManifest(manifest), /browserProfile is invalid/);
 });
 
+test("accepts the explicit desktop Safari browser profile", () => {
+  const manifest = {
+    id: "fixture",
+    displayName: "Fixture",
+    protocolVersion: 0,
+    revision: "fixture-1",
+    loginURL: "https://example.com/login",
+    browserProfile: "desktopSafari",
+    collections: [{ id: "favorites", displayName: "Favorites", kind: "favorite" }],
+    capabilities: {
+      sourceSavedAt: false,
+      resumableCursor: false,
+      detailNavigation: false,
+      orderedMedia: false
+    }
+  };
+
+  assert.equal(validateManifest(manifest).browserProfile, "desktopSafari");
+});
+
 test("loads exactly one plugin with a JSON describe response", async () => {
   const directory = await mkdtemp(join(tmpdir(), "eison-plugin-"));
   const filePath = join(directory, "plugin.js");

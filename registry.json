@@ -6,8 +6,9 @@
       "displayName": "小紅書",
       "scriptPath": "plugins/xiaohongshu/plugin.js",
       "scriptURL": "https://raw.githubusercontent.com/qoli/eisonAI3-Plugins/main/plugins/xiaohongshu/plugin.js",
-      "sha256": "7503325d7a716663d90b822cd56c70c623c3e816ffdafae5d582efb4cb2225c6",
-      "startURL": "https://www.xiaohongshu.com/explore"
+      "sha256": "1c7fa79c140607fc19bbeee7aecdd78c439585b39c5b688f1d571b89af2ba182",
+      "startURL": "https://www.xiaohongshu.com/explore",
+      "browserProfile": "desktopSafari"
     },
     {
       "id": "x.likes",
