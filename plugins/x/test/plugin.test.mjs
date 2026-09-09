@@ -7,9 +7,10 @@ import { parseHTML } from "linkedom";
 const pluginSource = await readFile(new URL("../plugin.js", import.meta.url), "utf8");
 const likesFixture = await readFile(new URL("./fixtures/likes.html", import.meta.url), "utf8");
 
-function loadPlugin(html, href = "https://x.com/i/history/likes") {
+function loadPlugin(html, href = "https://x.com/i/history/likes", cookie = "") {
   const { document, window } = parseHTML(html);
   document.elementFromPoint = () => null;
+  Object.defineProperty(document, "cookie", { value: cookie, configurable: true });
   const url = new URL(href);
   let plugin = null;
   let registrationCount = 0;
@@ -61,6 +62,30 @@ test("probe verifies the authenticated source account", async () => {
   });
 });
 
+test("probe uses the stable authenticated user id from the readable twid cookie", async () => {
+  const plugin = loadPlugin(
+    '<main data-testid="primaryColumn"></main>',
+    "https://x.com/i/history/likes",
+    "lang=zh-tw; twid=u%3D123456789%7Csigned; ct0=redacted"
+  );
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "ready");
+  assert.deepEqual(JSON.parse(JSON.stringify(response.sourceAccount)), {
+    id: "123456789",
+    displayName: null
+  });
+});
+
+test("malformed twid cookie fails identity instead of falling through to DOM identity", async () => {
+  const html = `
+    <a href="/RonnieWong"><img src="https://pbs.twimg.com/profile_images/self.jpg"></a>
+    <main data-testid="primaryColumn"></main>
+  `;
+  const plugin = loadPlugin(html, "https://x.com/i/history/likes", "twid=malformed");
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "sourceStructureChanged");
+});
+
 test("probe verifies the authenticated source account in the compact navigation", async () => {
   const html = `
     <a href="/RonnieWong"><img src="https://pbs.twimg.com/profile_images/self.jpg"></a>
@@ -73,6 +98,45 @@ test("probe verifies the authenticated source account in the compact navigation"
     id: "ronniewong",
     displayName: null
   });
+});
+
+test("probe verifies compact identity from the account avatar container", async () => {
+  const html = `
+    <div data-testid="UserAvatar-Container-0xCheshire"></div>
+    <main data-testid="primaryColumn"></main>
+  `;
+  const plugin = loadPlugin(html);
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "ready");
+  assert.deepEqual(JSON.parse(JSON.stringify(response.sourceAccount)), {
+    id: "0xcheshire",
+    displayName: null
+  });
+});
+
+test("compact avatar identity excludes tweet authors and rejects malformed handles", async () => {
+  const html = `
+    <main data-testid="primaryColumn">
+      <article data-testid="tweet">
+        <div data-testid="UserAvatar-Container-author"></div>
+      </article>
+      <div data-testid="UserAvatar-Container-handle-is-too-long"></div>
+    </main>
+  `;
+  const plugin = loadPlugin(html);
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "sourceStructureChanged");
+});
+
+test("compact avatar identity rejects multiple authenticated candidates", async () => {
+  const html = `
+    <div data-testid="UserAvatar-Container-first"></div>
+    <div data-testid="UserAvatar-Container-second"></div>
+    <main data-testid="primaryColumn"></main>
+  `;
+  const plugin = loadPlugin(html);
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "sourceStructureChanged");
 });
 
 test("compact navigation does not infer identity from a non-profile route", async () => {
@@ -150,6 +214,23 @@ test("collect extracts canonical records, ordered media, and omits promoted post
     kind: "scroll",
     deltaViewportRatio: 0.82
   });
+});
+
+test("ordinary posts are not rejected for an inner media placement tracker", async () => {
+  const html = `
+    <button data-testid="SideNav_AccountSwitcher_Button">Ronnie<br>@RonnieWong</button>
+    <main data-testid="primaryColumn">
+      <article data-testid="tweet">
+        <a href="/alice/status/1001"><time datetime="2026-09-09T01:00:00.000Z"></time></a>
+        <div data-testid="tweetText">Organic video post</div>
+        <div data-testid="placementTracking"><video poster="https://pbs.twimg.com/video.jpg"></video></div>
+      </article>
+    </main>
+  `;
+  const plugin = loadPlugin(html);
+  const response = await plugin.run({ operation: "collect", collectionID: "likes" });
+  assert.equal(response.status, "batch");
+  assert.equal(response.records[0].id, "1001");
 });
 
 test("collect expands show-more controls before returning records", async () => {

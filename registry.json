@@ -14,7 +14,7 @@
       "displayName": "X Likes",
       "scriptPath": "plugins/x/plugin.js",
       "scriptURL": "https://api.github.com/repos/qoli/eisonAI3-Plugins/contents/plugins/x/plugin.js?ref=main",
-      "sha256": "4853bb57028c9cd3c2ec51efba9171617655cfcc5ed32f618705c2fa4219ebaa",
+      "sha256": "cfd596fc0d4a9a2c1d49e1349ee4b6f32c3f811b3e9a73eb177ac6981b807662",
       "startURL": "https://x.com/i/history/likes",
       "browserProfile": "mobileSafari"
     }

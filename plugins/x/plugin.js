@@ -5,7 +5,7 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.4.6",
+    revision: "draft-v0.4.11",
     loginURL: "https://x.com/i/flow/login",
     browserProfile: "mobileSafari",
     collections: [
@@ -103,6 +103,22 @@
   }
 
   function sourceAccount() {
+    const twidCookie = String(document.cookie || "")
+      .split(";")
+      .map(value => value.trim())
+      .find(value => value.startsWith("twid="));
+    if (twidCookie) {
+      let decoded;
+      try {
+        decoded = decodeURIComponent(twidCookie.slice("twid=".length).replace(/^"|"$/g, ""));
+      } catch (error) {
+        return null;
+      }
+      const match = decoded.match(/^u=(\d+)(?:\|.*)?$/);
+      if (!match) return null;
+      return { id: match[1], displayName: null };
+    }
+
     const accountControl = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
     if (accountControl) {
       const lines = String(accountControl.innerText || accountControl.textContent || "")
@@ -117,6 +133,16 @@
     }
 
     const compactAccounts = new Map();
+    for (const avatarContainer of document.querySelectorAll('[data-testid^="UserAvatar-Container-"]')) {
+      if (avatarContainer.closest('article[data-testid="tweet"], [data-testid="UserCell"]')) continue;
+      const testID = avatarContainer.getAttribute("data-testid") || "";
+      const match = testID.match(/^UserAvatar-Container-([A-Za-z0-9_]{1,15})$/);
+      if (!match) continue;
+      compactAccounts.set(match[1].toLowerCase(), {
+        id: match[1].toLowerCase(),
+        displayName: null
+      });
+    }
     for (const profileLink of document.querySelectorAll('a[href]')) {
       if (!profileLink.querySelector("img")) continue;
       if (profileLink.closest('article[data-testid="tweet"], [data-testid="UserCell"]')) continue;
@@ -194,6 +220,18 @@
     return ancestors;
   }
 
+  function sourceItemStructure() {
+    return [...document.querySelectorAll('[data-testid="tweet"], [data-testid="cellInnerDiv"], article')]
+      .slice(0, 12)
+      .map(element => ({
+        tag: element.tagName.toLowerCase(),
+        testID: element.getAttribute("data-testid"),
+        hasStatusLink: Boolean(element.querySelector('a[href*="/status/"]')),
+        hasTweetText: Boolean(element.querySelector('[data-testid="tweetText"]')),
+        hasTime: Boolean(element.querySelector("time"))
+      }));
+  }
+
   function structureProblem() {
     const primaryColumn = document.querySelector('[data-testid="primaryColumn"]');
     if (!primaryColumn) {
@@ -221,7 +259,9 @@
         diagnostics: pageDiagnostics({
           invariant: "authenticated source account identity was not found",
           selectors: [
+            'document.cookie["twid"]',
             '[data-testid="SideNav_AccountSwitcher_Button"]',
+            '[data-testid^="UserAvatar-Container-"]',
             'a[href]:has(img):not(article[data-testid="tweet"] *, [data-testid="UserCell"] *)'
           ],
           accountControlStructure: topLeftAccountStructure(),
@@ -271,8 +311,17 @@
   }
 
   function isPromoted(article) {
-    if (article.querySelector('[data-testid="placementTracking"]')) return true;
-    return /\bPromoted\b|\bAd\b|推廣|广告|廣告/i.test(article.innerText || article.textContent || "");
+    const evidence = promotionEvidence(article);
+    return evidence.hasOuterPlacementTracking || evidence.hasPromotedLabel;
+  }
+
+  function promotionEvidence(article) {
+    return {
+      hasOuterPlacementTracking: Boolean(article.closest('[data-testid="placementTracking"]')),
+      hasPromotedLabel: /\bPromoted\b|\bAd\b|推廣|广告|廣告/i.test(
+        article.innerText || article.textContent || ""
+      )
+    };
   }
 
   function recordFor(article) {
@@ -373,8 +422,12 @@
 
     const records = [];
     const seen = new Set();
+    const skippedPromotedEvidence = [];
     for (const article of document.querySelectorAll('article[data-testid="tweet"]')) {
-      if (isPromoted(article)) continue;
+      if (isPromoted(article)) {
+        skippedPromotedEvidence.push(promotionEvidence(article));
+        continue;
+      }
       const result = recordFor(article);
       if (result.error) {
         return {
@@ -398,10 +451,22 @@
       scrollY: window.scrollY,
       scrollHeight: root.scrollHeight,
       viewportHeight: window.innerHeight,
-      atBottom
+      atBottom,
+      skippedPromotedCount: skippedPromotedEvidence.length,
+      skippedPromotedEvidence
     });
 
     if (batch.length === 0) {
+      if (document.querySelector('a[href*="/status/"]')) {
+        return {
+          status: "sourceStructureChanged",
+          diagnostics: Object.assign(diagnostics, {
+            invariant: "visible X status links were not enclosed by a supported source item",
+            selectors: ['article[data-testid="tweet"]'],
+            sourceItemStructure: sourceItemStructure()
+          })
+        };
+      }
       return {
         status: "endUnconfirmed",
         sourceAccount: sourceAccount(),
