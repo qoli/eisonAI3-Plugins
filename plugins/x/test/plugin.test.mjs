@@ -62,7 +62,7 @@ test("probe verifies the authenticated source account", async () => {
 
 test("probe verifies the authenticated source account in the compact navigation", async () => {
   const html = `
-    <a data-testid="AppTabBar_Profile_Link" href="/RonnieWong">Profile</a>
+    <a href="/RonnieWong"><img src="https://pbs.twimg.com/profile_images/self.jpg"></a>
     <main data-testid="primaryColumn"></main>
   `;
   const plugin = loadPlugin(html);
@@ -76,13 +76,37 @@ test("probe verifies the authenticated source account in the compact navigation"
 
 test("compact navigation does not infer identity from a non-profile route", async () => {
   const html = `
-    <a data-testid="AppTabBar_Profile_Link" href="/i/history/likes">Profile</a>
+    <a href="/i/history/likes"><img src="https://pbs.twimg.com/profile_images/not-a-profile.jpg"></a>
     <main data-testid="primaryColumn"></main>
   `;
   const plugin = loadPlugin(html);
   const response = await plugin.run({ operation: "probe" });
   assert.equal(response.status, "sourceStructureChanged");
   assert.match(response.diagnostics.invariant, /source account identity/);
+});
+
+test("compact navigation rejects ambiguous account identity", async () => {
+  const html = `
+    <a href="/first"><img src="https://pbs.twimg.com/profile_images/first.jpg"></a>
+    <a href="/second"><img src="https://pbs.twimg.com/profile_images/second.jpg"></a>
+    <main data-testid="primaryColumn"></main>
+  `;
+  const plugin = loadPlugin(html);
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "sourceStructureChanged");
+});
+
+test("compact navigation never infers identity from a tweet author", async () => {
+  const html = `
+    <main data-testid="primaryColumn">
+      <article data-testid="tweet">
+        <a href="/author"><img src="https://pbs.twimg.com/profile_images/author.jpg"></a>
+      </article>
+    </main>
+  `;
+  const plugin = loadPlugin(html);
+  const response = await plugin.run({ operation: "probe" });
+  assert.equal(response.status, "sourceStructureChanged");
 });
 
 test("probe returns explicit login and verification states", async () => {

@@ -5,7 +5,7 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.4.1",
+    revision: "draft-v0.4.2",
     loginURL: "https://x.com/i/flow/login",
     browserProfile: "mobileSafari",
     collections: [
@@ -116,18 +116,26 @@
       }
     }
 
-    const profileLink = document.querySelector('a[data-testid="AppTabBar_Profile_Link"][href]');
-    if (!profileLink) return null;
-    let profileURL;
-    try {
-      profileURL = new URL(profileLink.getAttribute("href"), location.href);
-    } catch (error) {
-      return null;
+    const compactAccounts = new Map();
+    for (const profileLink of document.querySelectorAll('a[href]')) {
+      if (!profileLink.querySelector("img")) continue;
+      if (profileLink.closest('article[data-testid="tweet"], [data-testid="UserCell"]')) continue;
+      let profileURL;
+      try {
+        profileURL = new URL(profileLink.getAttribute("href"), location.href);
+      } catch (error) {
+        continue;
+      }
+      if (profileURL.origin !== "https://x.com") continue;
+      const match = profileURL.pathname.match(/^\/([A-Za-z0-9_]{1,15})\/?$/);
+      if (!match) continue;
+      compactAccounts.set(match[1].toLowerCase(), {
+        id: match[1].toLowerCase(),
+        displayName: null
+      });
     }
-    if (profileURL.origin !== "https://x.com") return null;
-    const match = profileURL.pathname.match(/^\/([A-Za-z0-9_]{1,15})\/?$/);
-    if (!match) return null;
-    return { id: match[1].toLowerCase(), displayName: null };
+    if (compactAccounts.size !== 1) return null;
+    return compactAccounts.values().next().value;
   }
 
   function structureProblem() {
@@ -158,7 +166,7 @@
           invariant: "authenticated source account identity was not found",
           selectors: [
             '[data-testid="SideNav_AccountSwitcher_Button"]',
-            'a[data-testid="AppTabBar_Profile_Link"][href]'
+            'a[href]:has(img):not(article[data-testid="tweet"] *, [data-testid="UserCell"] *)'
           ]
         })
       };
