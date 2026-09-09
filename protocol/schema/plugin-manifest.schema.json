@@ -10,7 +10,6 @@
     "protocolVersion",
     "revision",
     "loginURL",
-    "allowedOrigins",
     "collections",
     "capabilities"
   ],
@@ -20,12 +19,6 @@
     "protocolVersion": { "const": 0 },
     "revision": { "type": "string", "minLength": 1 },
     "loginURL": { "type": "string", "pattern": "^https://" },
-    "allowedOrigins": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^https://" }
-    },
     "browserProfile": { "enum": ["systemSafari"] },
     "collections": {
       "type": "array",

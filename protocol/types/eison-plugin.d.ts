@@ -15,7 +15,6 @@ export interface PluginManifest {
   protocolVersion: 0;
   revision: string;
   loginURL: string;
-  allowedOrigins: string[];
   browserProfile?: PluginBrowserProfile;
   collections: Array<{
     id: string;

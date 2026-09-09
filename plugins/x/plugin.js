@@ -5,9 +5,8 @@
     id: "x.likes",
     displayName: "X Likes",
     protocolVersion: 0,
-    revision: "draft-v0.3.1",
+    revision: "draft-v0.4.0",
     loginURL: "https://x.com/i/flow/login",
-    allowedOrigins: ["https://x.com"],
     browserProfile: "systemSafari",
     collections: [
       { id: "likes", displayName: "Likes", kind: "like" }

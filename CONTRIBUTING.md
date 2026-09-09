@@ -27,8 +27,7 @@ The protocol and validator live under `protocol/`.
 2. Cover `describe`, `probe`, `collect`, and `detail` behaviour.
 3. Preserve explicit `needsLogin`, `needsUserVerification`,
    `sourceStructureChanged`, and `endUnconfirmed` states where applicable.
-4. Declare a required HTTPS `loginURL` whose origin is listed in
-   `allowedOrigins`.
+4. Declare a required HTTPS `loginURL`.
 5. If the source requires a `browserProfile`, declare the same supported value
    in the plugin manifest and registry descriptor.
 6. Do not report `endConfirmed` without positive terminal evidence.

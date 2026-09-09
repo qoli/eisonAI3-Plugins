@@ -5,9 +5,8 @@
     id: "xiaohongshu",
     displayName: "小紅書",
     protocolVersion: 0,
-    revision: "draft-0.2.0",
+    revision: "draft-0.3.0",
     loginURL: "https://www.xiaohongshu.com/website-login",
-    allowedOrigins: ["https://www.xiaohongshu.com"],
     collections: [
       { id: "favorites", displayName: "收藏", kind: "favorite" },
       { id: "liked", displayName: "點讚", kind: "like" }
@@ -24,6 +23,7 @@
     favorites: { activeText: "收藏", tab: "fav", sourceMarker: "pc_collect" },
     liked: { activeText: "点赞", tab: "liked", sourceMarker: "pc_like" }
   });
+  const SOURCE_ORIGIN = "https://www.xiaohongshu.com";
   const END_TEXTS = new Set(["没有更多了", "沒有更多了", "已经到底了", "已經到底了", "到底了"]);
   const EMPTY_TEXTS = Object.freeze({
     favorites: new Set(["暂无收藏", "暫無收藏", "还没有收藏", "還沒有收藏"]),
@@ -74,10 +74,10 @@
     if (!url) {
       return { status: "sourceStructureChanged", diagnostics: diagnostics("invalidPageURL", {}) };
     }
-    if (url.origin !== manifest.allowedOrigins[0]) {
+    if (url.origin !== SOURCE_ORIGIN) {
       return {
         status: "needsUserVerification",
-        diagnostics: diagnostics("wrongOrigin", { currentOrigin: url.origin, allowedOrigins: manifest.allowedOrigins })
+        diagnostics: diagnostics("wrongOrigin", { currentOrigin: url.origin, expectedOrigin: SOURCE_ORIGIN })
       };
     }
     const verification = verificationEvidence(url);
@@ -200,7 +200,7 @@
           };
         }
         const detailURL = new URL(cover.href, location.href);
-        if (detailURL.origin !== manifest.allowedOrigins[0] || !detailURL.pathname.startsWith(`/explore/${id}`)) {
+        if (detailURL.origin !== SOURCE_ORIGIN || !detailURL.pathname.startsWith(`/explore/${id}`)) {
           return { error: diagnostics("invalidDetailURL", { itemID: id, detailURL: detailURL.href }) };
         }
         records.push({

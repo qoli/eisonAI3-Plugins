@@ -27,9 +27,10 @@ The plugin registers exactly once with:
 }
 ```
 
-Every manifest declares a required HTTPS `loginURL`. Its origin must appear in
-`allowedOrigins`; the native host uses this verified URL for an explicit sign-in
-action instead of guessing a login route from the source homepage.
+Every manifest declares a required HTTPS `loginURL`; the native host uses this
+verified URL for an explicit sign-in action instead of guessing a login route
+from the source homepage. Subsequent HTTPS redirects remain browser navigation
+and are not predicted by the plugin contract.
 
 A plugin that requires browser-compatible server routing may declare the
 optional `browserProfile` value `systemSafari` in both its registry descriptor
